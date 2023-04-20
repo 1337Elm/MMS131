@@ -83,7 +83,7 @@ def evalPop(x: np.array,y: np.array, g: np.array, K: int,pop: np.array) -> int:
     return np.array(fitness)
 
 
-def selectInd(fitness: np.array, p_tour: int, K: int) -> np.array:
+def selectInd(fitness: np.array, p_tour: float, K: int) -> np.array:
     """Function that generates a list of the selected individuals
 
         :param fitness: np.array, list of fitness value for each individual
@@ -114,7 +114,7 @@ def selectInd(fitness: np.array, p_tour: int, K: int) -> np.array:
 
 
 
-def crossOver(selected_ind: np.array, p_cross: int,K: int,population: np.array,cross_point: int,num_param: int,fitness: np.array) -> np.array:
+def crossOver(selected_ind: np.array, p_cross: float,K: int,population: np.array,cross_point: int,num_param: int,fitness: np.array) -> np.array:
     """ Function that performs the crossover of genomes for each pair of individual
         in order for the population to evolve.
 
@@ -125,7 +125,12 @@ def crossOver(selected_ind: np.array, p_cross: int,K: int,population: np.array,c
 
         :return new_gen: np.array, 2d array of the new generation and their genomes
     """
+    #Initiate new 2d array for the population
     new_pop = np.zeros((num_param, K))
+
+    #Loop through every other individual check if it is supossed to be crossed
+    #If so swap parameters up til the crossing point with the next individual
+    #Add the modified individuals to the new list and return
     for i in range(K-1):
         r = random.uniform(0,1)
         if r < p_cross:
@@ -142,11 +147,42 @@ def crossOver(selected_ind: np.array, p_cross: int,K: int,population: np.array,c
     return np.array(new_pop)
         
 
-def mutation():
-    pass
+def mutation(new_gen: np.array,p_mut: float, p_creep: float,creepRate: float,K: int,num_param: int,param_range: int) -> np.array:
+    """ Function that mutates the population
+
+        :param new_gen: np.array, 2d list of the population after cross over
+        :param p_mut: float, probability of a mutation
+        :param p_creep: float, probability of creep mutation
+        :param creepRate: float, how much the genome is supossed to creep 
+        :param mutated_pop: np.array, returns an updated list after the population has mutated
+    """
+    #Initiate new list for mutated population
+    mutated_pop = np.zeros((num_param,K))
+
+    delta = 1e-6
+
+    #Loop through all individuals genomes and check if its supossed to be mutated
+    #If so check if mutation is supossed to be creep or ordinary
+    #Add mutated individual to new list and return
+    for i in range(K):
+        for j in range(num_param):
+            r = random.uniform(0,1)
+            if r < p_mut:
+                if r < p_creep:
+                    new_gen[j,i] = new_gen[j,i] + random.uniform(-creepRate/2,creepRate/2)
+                    mutated_pop[j,i] = new_gen[j,i]
+                else:
+                    new_gen[j,i] = random.uniform(-param_range,param_range + delta)
+                    mutated_pop[j,i] = new_gen[j,i]
+            else:
+                mutated_pop[j,i] = new_gen[j,i]
+
+    return np.array(mutated_pop)    
 
 
 def main():
+    """Main function of the script. Iterating through the genetic algorithm procedure
+    """
     #Hard code specific case
     filename = 'data_ga.txt'
     K = 100
@@ -155,6 +191,9 @@ def main():
     p_tour = 0.75
     p_cross = 0.85
     cross_point = 2
+    p_mut = 0.125
+    p_creep = 0.5
+    creep_rate = 0.01
 
     x, y, g = read_file('Assignment2/2.3/' + filename)
 
@@ -167,7 +206,7 @@ def main():
     selected_ind = selectInd(fitness,p_cross,K)
 
     new_gen = crossOver(selected_ind,p_cross,K,pop, cross_point,num_param,fitness)
-
+    mutated_gen = mutation(new_gen,p_mut,p_creep,creep_rate,K,num_param,param_range)
 
 
 if __name__ == '__main__':
