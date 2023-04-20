@@ -97,7 +97,7 @@ def selectInd(fitness: np.array, p_tour: int, K: int) -> np.array:
 
     for j in range(K):
         for i in range(2):
-            r = random.randint(0,1)
+            r = random.uniform(0,1)
             inds = [random.randint(0,K-1), random.randint(0,K-1)]
             if r < p_tour:
                 if fitness[inds[0]] > fitness[inds[1]]:
@@ -114,21 +114,47 @@ def selectInd(fitness: np.array, p_tour: int, K: int) -> np.array:
 
 
 
-def crossOver():
-    pass
+def crossOver(selected_ind: np.array, p_cross: int,K: int,population: np.array,cross_point: int,num_param: int,fitness: np.array) -> np.array:
+    """ Function that performs the crossover of genomes for each pair of individual
+        in order for the population to evolve.
 
+        :param selected_ind: np.array, list of individuals that make it to the next gen
+        :param p_cross: int, probability of a cross over of genome
+        :param K:, int, number of individuals
+        :param population: np.array, 2d array of each individual and their genome
+
+        :return new_gen: np.array, 2d array of the new generation and their genomes
+    """
+    new_pop = np.zeros((num_param, K))
+    for i in range(K-1):
+        r = random.uniform(0,1)
+        if r < p_cross:
+            temp = population[:cross_point,selected_ind[i]]
+            population[:cross_point,selected_ind[i]] = population[:cross_point,selected_ind[i+1]]
+            population[:cross_point,selected_ind[i+1]] = temp
+
+            new_pop[:,i] = population[:,selected_ind[i]]
+            new_pop[:,i+1] = population[:,selected_ind[i+1]]
+            i += 2
+    
+    #Elitism
+    new_pop[:,0] = population[:,np.argmax(fitness)]
+    return np.array(new_pop)
+        
 
 def mutation():
     pass
 
 
 def main():
-    #Hard code given case
+    #Hard code specific case
     filename = 'data_ga.txt'
     K = 100
     num_param = 6
     param_range = 2
     p_tour = 0.75
+    p_cross = 0.85
+    cross_point = 2
 
     x, y, g = read_file('Assignment2/2.3/' + filename)
 
@@ -138,7 +164,9 @@ def main():
 
     fitness = evalPop(x,y,g,K,pop)
     
-    selected_ind = selectInd(fitness,p_tour,K)
+    selected_ind = selectInd(fitness,p_cross,K)
+
+    new_gen = crossOver(selected_ind,p_cross,K,pop, cross_point,num_param,fitness)
 
 
 
