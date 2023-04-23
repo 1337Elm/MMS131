@@ -53,39 +53,14 @@ def initPop(K: int, num_param: int, param_range: int) -> np.array:
 
 
 def evalInd(ind_gene: list,x: np.array,y: np.array, g: np.array, K: int) -> int:
-    """Function that evaluates the population and returns the fitness of it
-
-        :param x: np.array, list of x values
-        :param y: np.array, list of y values
-        :param g: np.array, list of function values
-        :param K: int, number of individuals in the population
-        :param pop: np.array, 2d array of each individuals genome
-        :param return: np.array, list of fitness values for each individual
-    """
-    eps = 0
-    #Loop through each individual and sum the square of the difference between g_hat and g
-    for j in range(K):
-        g_hat = (1 + x[j]*ind_gene[0] + x[j]**2*ind_gene[1] + x[j]**3*ind_gene[2])\
-            /(1 + y[j]*ind_gene[3] + y[j]**2*ind_gene[4] + y[j]**3*ind_gene[5])
-            
-        eps += (g_hat-g[j])**2
-
-    #Calculate eps according to given formula
-    eps = np.sqrt(eps*(1/K))
-    
+    g_hat = (1 + x*ind_gene[0] + x**2*ind_gene[1] + x**3*ind_gene[2])\
+        /(1 + y*ind_gene[3] + y**2*ind_gene[4] + y**3*ind_gene[5])
+        
+    eps = np.sqrt(np.sum((g_hat-g)**2)*(1/K))
     return np.exp(-eps)
 
 
 def selectInd(fitness: np.array, p_tour: float,K: int) -> int:
-    """Function that generates a list of the selected individuals
-
-        :param fitness: np.array, list of fitness value for each individual
-        :param p_tour: int, limit for selection of which individual to choose (used in order to be biased, so the
-        individual with higher fitness often is selected)
-        :param K: int, number of individuals
-
-        :param return: int, index for selected individual
-    """
     r = random.uniform(0,1)
     inds = [random.randint(0,K-1), random.randint(0,K-1)]
     if r < p_tour:
@@ -101,56 +76,39 @@ def selectInd(fitness: np.array, p_tour: float,K: int) -> int:
 
 
 def crossOver(gene_1: list,gene_2: list,num_param: int) -> np.array:
-    """ Function that performs the crossover of genomes for a pair of individuals
-        in order for the population to evolve.
-
-        :param gene_1: np.array, genome for individual one
-        :param gene_2: np.array, genome for individual two
-        :param num_param:, int, number of individuals
-
-        :return new_gen: np.array, list of the two new individuals
-    """
-    #Loop through every other individual check if it is supossed to be crossed
-    #If so swap parameters up til the crossing point with the next individual
-    #Add the modified individuals to the new list and return
     new_inds = []
+    new_gene1 = []
+    new_gene2 = []
 
     cross_point = random.randint(0,num_param)
-    temp = gene_1[:cross_point]
-    gene_1[:cross_point] = gene_2[:cross_point]
-    gene_2[:cross_point] = temp
+    for i in range(len(gene_1)):
+        if i <= cross_point:
+            new_gene1.append(gene_2[i])
+            new_gene2.append(gene_1[i])
+        else:
+            new_gene1.append(gene_1[i])
+            new_gene2.append(gene_2[i])
     
-    new_inds.append(gene_1)
-    new_inds.append(gene_2)
-    
+    new_inds.append(new_gene1)
+    new_inds.append(new_gene2)
+
     return np.array(new_inds)
         
 
 def mutation(gene: np.array,p_mut: float, p_creep: float,creepRate: float,param_range: int) -> np.array:
-    """ Function that mutates the population
-
-        :param new_gen: np.array, 2d list of the population after cross over
-        :param p_mut: float, probability of a mutation
-        :param p_creep: float, probability of creep mutation
-        :param creepRate: float, how much the genome is supossed to creep 
-        :param mutated_pop: np.array, returns an updated list after the population has mutated
-    """
     new_gene = np.zeros(len(gene))
     delta = 1e-6
 
-    #Loop through all individuals genomes and check if its supossed to be mutated
-    #If so check if mutation is supossed to be creep or ordinary
-    #Add mutated individual to new list and return
     for i in range(len(gene)):
         r = random.uniform(0,1)
         if r < p_mut:
+            r = random.uniform(0,1)
             if r < p_creep:
-                new_gene[i] = gene[i] + random.uniform(-creepRate/2,creepRate/2)
+                new_gene[i] = gene[i] + random.uniform(-creepRate/2,creepRate/2 + delta)
             else:
                 new_gene[i] = random.uniform(-param_range,param_range + delta)
         else:
             new_gene[i] = gene[i]
-
     return new_gene 
 
 
@@ -170,64 +128,60 @@ def main():
 
     x, y, g = read_file('Assignment2/2.3/' + filename)
 
-    num_gens = 100
-    best_fitness = np.zeros(num_gens)
+    num_gens = 10000
+    best_fitness_gen = np.zeros(num_gens)
     fitness = np.zeros(K)
     max_fitness = 0
-    max_fitness_gen = 0
 
     #Go step by step through the metholodgy 
     #init population, evaluate, cross-over, mutation, iterate
     pop = initPop(K,num_param,param_range)
 
     for i in range(num_gens):
-        print(pop[:,0])
-        max_fitness_gen = 0
+        max_fitness_gen = 0 
         for j in range(K):
             fitness[j] = evalInd(pop[:,j],x,y,g,K)
+            if fitness[j] > max_fitness_gen:
+                max_fitness_gen = fitness[j]
+                best_ind_gen = pop[:,j]
             if fitness[j] > max_fitness:
                 max_fitness = fitness[j]
                 best_Ind = j
-            if fitness[j] > max_fitness_gen:
-                max_fitness_gen = fitness[j]
-                best_ind_gen = j
 
-        best_fitness[i] = max_fitness_gen
-
-        for j in range(K-1):
+        best_fitness_gen[i] = evalInd(best_ind_gen,x,y,g,K)
+        if i < num_gens:
             temp_pop = pop
+            temp_pop[:,0] = best_ind_gen
+            for j in range(0,K,2):
+                if j != 0:
+                    ind_1 = selectInd(fitness,p_tour,K)
+                    ind_2 = selectInd(fitness,p_tour,K)
 
-            ind_1 = selectInd(fitness,p_tour,K)
-            ind_2 = selectInd(fitness,p_tour,K)
+                    r = random.uniform(0,1)
+                    if r < p_cross:
+                        new_inds = crossOver(pop[:,ind_1],pop[:,ind_2],num_param)
+                    
+                        temp_pop[:,j] = new_inds[0]
+                        temp_pop[:,j+1] = new_inds[1]
+                    else:
+                        temp_pop[:,j] = pop[:,ind_1]
+                        temp_pop[:,j+1] = pop[:,ind_2]
 
-            r = random.uniform(0,1)
-            if r < p_cross:
-                new_inds = crossOver(pop[:,ind_1],pop[:,ind_2],num_param)
-
-                temp_pop[:,j] = new_inds[0]
-                temp_pop[:,j+1] = new_inds[1]
-            else:
-                temp_pop[:,j] = pop[:,ind_1]
-                temp_pop[:,j+1] = pop[:,ind_2]
-            
-            temp_pop[:,0] = pop[:,best_ind_gen]
-            j += 2
-
-        for n in range(1,K):
-            mutatedGene = mutation(pop[:,n],p_mut,p_creep,creep_rate,param_range)
-            temp_pop[:,n] = mutatedGene
-        pop = temp_pop
-        print(pop[:,0])
+            for n in range(len(temp_pop[1,:])):
+                if n != 0:
+                    mutatedGene = mutation(temp_pop[:,n],p_mut,p_creep,creep_rate,param_range)
+                    temp_pop[:,n] = mutatedGene
+            pop = temp_pop
     
-    #print(pop[:,best_Ind])
-
-        
+    print(f"the most correct parameters are {pop[:,best_Ind]}")
 
     fig = plt.figure()
-    plt.plot(np.linspace(0,num_gens, num = num_gens),best_fitness, 'b')
-    #plt.axis([0,num_gens,0,1])
+    plt.plot(np.linspace(0,num_gens, num = num_gens),best_fitness_gen, 'b')
+    plt.axis([0,num_gens,0,1])
     plt.xlabel("generation [-]")
-    plt.ylabel("fitness")
+    plt.ylabel("fitness [-]")
+    plt.title("Plot of best fitness as a function of generation")
+    plt.savefig("Assignment2/2.3/plots/best_fitness.jpeg")
     plt.show()
 
 
