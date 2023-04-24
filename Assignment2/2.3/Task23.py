@@ -10,6 +10,7 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib
 import warnings
+import time
 
 #---------------------------
 #Ignore deprecation warnings
@@ -53,6 +54,16 @@ def initPop(K: int, num_param: int, param_range: int) -> np.array:
 
 
 def evalInd(ind_gene: list,x: np.array,y: np.array, g: np.array, K: int) -> int:
+    """Function that calculates the estimate g_hat, then calculates epsilon aswell as the fitness.
+
+        :param ind_gene: list, a list of the genes for the current individual
+        :param x: np.array, array of x values from txt file
+        :param y: np.array, array of y values from txt file
+        :param g: np.array, correct values from txt file
+        :param K: int, population size
+
+        :param return: int, fitess for the current individual
+    """
     g_hat = (1 + x*ind_gene[0] + x**2*ind_gene[1] + x**3*ind_gene[2])\
         /(1 + y*ind_gene[3] + y**2*ind_gene[4] + y**3*ind_gene[5])
         
@@ -61,6 +72,15 @@ def evalInd(ind_gene: list,x: np.array,y: np.array, g: np.array, K: int) -> int:
 
 
 def selectInd(fitness: np.array, p_tour: float,K: int) -> int:
+    """Function that takes 2 random individuals of the population and selects 1 of them based
+        their fitness. The individual with high fitness is more likely to be chosen.
+
+        :param fitness: np.array, fitness for each individual
+        :param p_tour: float, probability that individual with higher fitness is chosen
+        :param K: int, populationsize
+        
+        :param return: int, index for the chosen individual
+    """
     r = random.uniform(0,1)
     inds = [random.randint(0,K-1), random.randint(0,K-1)]
     if r < p_tour:
@@ -76,6 +96,14 @@ def selectInd(fitness: np.array, p_tour: float,K: int) -> int:
 
 
 def crossOver(gene_1: list,gene_2: list,num_param: int) -> np.array:
+    """Function that crosses over two genes (all chromosomes up to a random point)
+
+        :param gene_1: list, list of chromosomes for individual 1
+        :param gene_2: list, list of chromosomes for individual 2
+        :param num_param: int, number of chromosomes per individual
+
+        :param return: np.array, array of the two new individuals
+    """
     new_inds = []
     new_gene1 = []
     new_gene2 = []
@@ -96,6 +124,16 @@ def crossOver(gene_1: list,gene_2: list,num_param: int) -> np.array:
         
 
 def mutation(gene: np.array,p_mut: float, p_creep: float,creepRate: float,param_range: int) -> np.array:
+    """Function that mutates each chromose based on a probability. If the chromosome is supossed to be mutated.
+        It is then decided based on probability if the mutation is supossed to be creep-mutation of full mutation.
+
+        :param gene: np.array, list of chromosomes for the current individual
+        :param p_mut: float, probability that a chromosome is to be mutated
+        :param p_creep: float, probability that the mutation is a creep-mutation
+        :param param_range: int, the allowed range for each parameter
+
+        :param return: np.array, new list of chromosomes for the current individual
+    """
     new_gene = np.zeros(len(gene))
     delta = 1e-6
 
@@ -116,6 +154,8 @@ def main():
     """Main function of the script. Iterating through the genetic algorithm procedure
     """
     #Hard code specific case
+    start = time.time()
+
     filename = 'data_ga.txt'
     K = 100
     num_param = 6
@@ -128,8 +168,9 @@ def main():
 
     x, y, g = read_file('Assignment2/2.3/' + filename)
 
-    num_gens = 10000
+    num_gens = 1000000
     best_fitness_gen = np.zeros(num_gens)
+    mean_fitness = np.zeros(num_gens)
     fitness = np.zeros(K)
     max_fitness = 0
 
@@ -149,6 +190,7 @@ def main():
                 best_Ind = j
 
         best_fitness_gen[i] = evalInd(best_ind_gen,x,y,g,K)
+        mean_fitness[i] = np.mean(fitness)
         if i < num_gens:
             temp_pop = pop
             temp_pop[:,0] = best_ind_gen
@@ -174,13 +216,17 @@ def main():
             pop = temp_pop
     
     print(f"the most correct parameters are {pop[:,best_Ind]}")
+    end = time.time()
+    print(f"Time spent: {end-start}")
 
     fig = plt.figure()
-    plt.plot(np.linspace(0,num_gens, num = num_gens),best_fitness_gen, 'b')
+    plt.plot(np.linspace(0,num_gens, num = num_gens),best_fitness_gen, 'b',label = "Best fitness/generation")
+    plt.plot(np.linspace(0,num_gens,num_gens), mean_fitness,'k',label = "Mean fitness/generation")
     plt.axis([0,num_gens,0,1])
     plt.xlabel("generation [-]")
     plt.ylabel("fitness [-]")
     plt.title("Plot of best fitness as a function of generation")
+    plt.legend(loc = "best")
     plt.savefig("Assignment2/2.3/plots/best_fitness.jpeg")
     plt.show()
 
