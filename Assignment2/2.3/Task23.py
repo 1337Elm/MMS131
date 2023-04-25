@@ -152,7 +152,17 @@ def mutation(gene: np.array,p_mut: float, p_creep: float,creepRate: float,param_
 
 
 def runAlgo(param_range: int, p_tour: int, p_cross: int, p_mut: int, p_creep: int, creep_rate: int,plot: bool) -> list:
-    
+    """Function that runs through the metholodgy
+
+        :param param_range: int, allowed interval for each parameter
+        :param p_tour: int, probability that the individual with higher fitness is chosen in the tournament
+        :param p_cross: int, probability that two individuals are crossed
+        :param p_mut: int, probability that a gene is to be mutated
+        :param p_creep: int, probability that the mutation is to be of the kind creep
+        :param creep_rate: int, how much the creep-mutation is allowed to vary
+
+        :param return: int, the best fitness achieved for the instance of the algorithm
+    """
     start = time.time()
 
     filename = 'data_ga.txt'
@@ -228,7 +238,11 @@ def runAlgo(param_range: int, p_tour: int, p_cross: int, p_mut: int, p_creep: in
 
 
 def find_best_params():
+    """ Function that finds the best combinations of parameters to use. To limit somewhat
+        only 4 values are tested for each parameter. Running this still takes an estimated 22h.
 
+        :param return: list of the best combinations of parameters and the maximum fitness achieved with these
+    """
     param_range = [2,1,3,4]
     p_tour = [0.2,0.4,0.75,0.9]
     p_cross = [0.2,0.4,0.75,0.9]
@@ -256,7 +270,9 @@ def find_best_params():
 
 
 def main():
-    """Main function of the script. Calling the function that goes through the metholodgy
+    """Main function of the script. Either runs the standard case and plots the results
+        or finds the best combination of parameters to use (est. time 22h). Reply "N" to input to run normal case
+        and "F" to find best parameters.
     """
     #Hard code specific case
     param_range = 2
@@ -278,7 +294,6 @@ def main():
         print(f"The best fitness with these parameters is {maxfitness}")
 
         runAlgo(params[0],params[1],params[2],params[3],params[4],params[5],plot = True)
-
 
 
 if __name__ == '__main__':
