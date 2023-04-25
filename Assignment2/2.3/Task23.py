@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 import warnings
 import time
+from tqdm.auto import tqdm
 
 #---------------------------
 #Ignore deprecation warnings
@@ -150,25 +151,16 @@ def mutation(gene: np.array,p_mut: float, p_creep: float,creepRate: float,param_
     return new_gene 
 
 
-def main():
-    """Main function of the script. Iterating through the genetic algorithm procedure
-    """
-    #Hard code specific case
+def runAlgo(param_range: int, p_tour: int, p_cross: int, p_mut: int, p_creep: int, creep_rate: int,plot: bool) -> list:
+    
     start = time.time()
 
     filename = 'data_ga.txt'
+    x, y, g = read_file('Assignment2/2.3/' + filename)
     K = 100
     num_param = 6
-    param_range = 2
-    p_tour = 0.75
-    p_cross = 0.75
-    p_mut = 0.125
-    p_creep = 0.5
-    creep_rate = 0.01
 
-    x, y, g = read_file('Assignment2/2.3/' + filename)
-
-    num_gens = 1000000
+    num_gens = 10000
     best_fitness_gen = np.zeros(num_gens)
     mean_fitness = np.zeros(num_gens)
     fitness = np.zeros(K)
@@ -179,7 +171,8 @@ def main():
     pop = initPop(K,num_param,param_range)
 
     for i in range(num_gens):
-        max_fitness_gen = 0 
+        max_fitness_gen = 0
+        best_ind_gen = None
         for j in range(K):
             fitness[j] = evalInd(pop[:,j],x,y,g,K)
             if fitness[j] > max_fitness_gen:
@@ -208,27 +201,84 @@ def main():
                     else:
                         temp_pop[:,j] = pop[:,ind_1]
                         temp_pop[:,j+1] = pop[:,ind_2]
-
+            
             for n in range(len(temp_pop[1,:])):
                 if n != 0:
                     mutatedGene = mutation(temp_pop[:,n],p_mut,p_creep,creep_rate,param_range)
                     temp_pop[:,n] = mutatedGene
             pop = temp_pop
     
-    print(f"the most correct parameters are {pop[:,best_Ind]}")
-    end = time.time()
-    print(f"Time spent: {end-start}")
+    if plot == True:
+        print(f"the most correct parameters are {pop[:,best_Ind]}")
+        end = time.time()
+        print(f"Time spent: {end-start}")
 
-    fig = plt.figure()
-    plt.plot(np.linspace(0,num_gens, num = num_gens),best_fitness_gen, 'b',label = "Best fitness/generation")
-    plt.plot(np.linspace(0,num_gens,num_gens), mean_fitness,'k',label = "Mean fitness/generation")
-    plt.axis([0,num_gens,0,1])
-    plt.xlabel("generation [-]")
-    plt.ylabel("fitness [-]")
-    plt.title("Plot of best fitness as a function of generation")
-    plt.legend(loc = "best")
-    plt.savefig("Assignment2/2.3/plots/best_fitness.jpeg")
-    plt.show()
+        fig = plt.figure()
+        plt.plot(np.linspace(0,num_gens, num = num_gens),best_fitness_gen, 'b',label = "Best fitness/generation")
+        plt.plot(np.linspace(0,num_gens,num_gens), mean_fitness,'k',label = "Mean fitness/generation")
+        #plt.axis([0,num_gens,0,1])
+        plt.xlabel("generation [-]")
+        plt.ylabel("fitness [-]")
+        plt.title("Plot of best fitness as a function of generation")
+        plt.legend(loc = "best")
+        #plt.savefig("Assignment2/2.3/plots/best_fitness.jpeg")
+        plt.show()
+
+    return max_fitness
+
+
+def find_best_params():
+
+    param_range = [2,1,3,4]
+    p_tour = [0.2,0.4,0.75,0.9]
+    p_cross = [0.2,0.4,0.75,0.9]
+    p_mut = [0.125,0.4,0.6,0.8]
+    p_creep = [0.2,0.5,0.7,0.9]
+    creep_rate = [0.01,0.1,0.2,0.3]
+
+    progress_bar = tqdm(total = len(param_range)**6,position=0,leave=True,colour="green")
+
+    max_fitness = 0
+    best_params = []
+    for i1 in range(len(param_range)):
+        for i2 in range(len(p_tour)):
+            for i3 in range(len(p_cross)):
+                for i4 in range(len(p_mut)):
+                    for i5 in range(len(p_creep)):
+                        for i6 in range(len(creep_rate)):
+                            max_fitness_gen = runAlgo(param_range[i1],p_tour[i2],p_cross[i3],p_mut[i4],p_creep[i5],creep_rate[i6],plot = False)
+                            if max_fitness_gen > max_fitness:
+                                max_fitness = max_fitness_gen
+                                best_params = [param_range[i1],p_tour[i2],p_cross[i3],p_mut[i4],p_creep[i5],creep_rate[i6]]
+                            progress_bar.update(1)
+    
+    return best_params,max_fitness
+
+
+def main():
+    """Main function of the script. Calling the function that goes through the metholodgy
+    """
+    #Hard code specific case
+    param_range = 2
+    p_tour = 0.75
+    p_cross = 0.75
+    p_mut = 0.125
+    p_creep = 0.5
+    creep_rate = 0.01
+
+    case = input("Do you want to find best parameters or run normal case? (F/N)")
+    if case == "N":
+        runAlgo(param_range,p_tour,p_cross,p_mut,p_creep,creep_rate,plot = True)
+    elif case == "F":
+        params, maxfitness = find_best_params()
+
+        print(f"The best parameters are the following\n")
+        print(params)
+        print("——————————————————————————————————-")
+        print(f"The best fitness with these parameters is {maxfitness}")
+
+        runAlgo(params[0],params[1],params[2],params[3],params[4],params[5],plot = True)
+
 
 
 if __name__ == '__main__':

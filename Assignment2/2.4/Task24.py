@@ -37,7 +37,7 @@ def read_file(filename: str) -> np.array:
     return np.array(matrix)
 
 
-def find_path(matrix: np.array) ->list:
+def find_path(matrix: np.array,case: int) ->list:
     """Function that implements Best First Search in order to reach target node (end node)
         The function does this by going through all neighbors of the current node and calculates
         the distance to the target. The neighbor that is closest to the target is chosen to be the new current node.
@@ -46,6 +46,7 @@ def find_path(matrix: np.array) ->list:
         The function then returns the path taken in order to reach the target.
 
         :param matrix: np.array, 2d array of the "map"
+        :param case: int, choosing 4- or 8-connectivity
 
         :param return: np.array, 2d array of each node traversed 
     """
@@ -57,27 +58,33 @@ def find_path(matrix: np.array) ->list:
 
     current_node = startNode
     
-    distance = []
-    path = []
-    path.append(startNode)
+    #path = []
+    #path.append(startNode)
+    best_dist = 1
 
-    while current_node != endNode:
-        neighbors = find_neighbors(matrix,current_node,case = 1)
+    while best_dist > 0:
+        distance = []
+        neighbors = find_neighbors(matrix,current_node,case)
+        matrix[current_node[0],current_node[1]] = matrix[current_node[0],current_node[1]] + 5 #+5 means visited
 
-        if endNode in neighbors:
+        for i in range(len(neighbors)):
+            distance.append(calc_distance(matrix,neighbors[i]))
+
+        best_dist = np.min(distance)
+        if best_dist == 0:
             current_node = endNode
-            path.append(current_node)
+            matrix[current_node[0],current_node[1]] = matrix[current_node[0],current_node[1]] + 5 #+5 means visited
+            break
         else:
-            for i in range(len(neighbors)):
-                distance.append(calc_distance(matrix,neighbors[i]))
-        
-            matrix[current_node[0],current_node[1]] = 5 #5 means cant visit,
-            #which is true for already visited nodes, i.e this node has now been visited
+            try:
+                best_neighbor = neighbors[int(np.where(distance == best_dist)[0])]
+            except:
+                best_neighbor = neighbors[np.where(distance == best_dist)[0][0]]
 
-            current_node = neighbors[np.where(distance == np.min(distance))] #Update current node to node whish has min distance to target
-            path.append(current_node)
+            current_node = [best_neighbor[0],best_neighbor[1]] #Update current node to node whish has min distance to target
+            #path.append(current_node)
 
-    return path
+    return matrix
 
 
 def find_neighbors(matrix: np.array, node: list,case: int) -> list:
@@ -92,13 +99,13 @@ def find_neighbors(matrix: np.array, node: list,case: int) -> list:
         :param return: np.array, 2d array of coordinates for valid neighbors
     """
     neighbors = []
-    i = int(node[0])
-    j = int(node[1])
+    y = node[0]
+    x = node[1]
 
     if case == 1:
-        combinations = [[i+1,j],[i-1,j],[i,j+1],[i,j-1]]
+        combinations = [[y+1,x],[y-1,x],[y,x+1],[y,x-1]]
     else:
-        combinations = [[i+1,j],[i-1,j],[i,j+1],[i,j-1],[i+1,j+1],[i-1,j-1],[i+1,j-1],[i-1,j+1]]
+        combinations = [[y+1,x],[y-1,x],[y,x+1],[y,x-1],[y+1,x+1],[y-1,x-1],[y+1,x-1],[y-1,x+1]]
 
     for i in combinations:
         try:
@@ -116,19 +123,31 @@ def find_neighbors(matrix: np.array, node: list,case: int) -> list:
 
 
 def calc_distance(matrix: np.array, currentNode: list) -> int:
-    pass
+    """Function that calculates the manhattan distance from the current node to the end node.
+
+        :param matrix: np.array, 2d array of the "map"
+        :param currentNode: list, coordinates for the current node
+
+        :param return: int, manhattan distance from current node to the end node
+    """
+    endNode = np.where(matrix == 3)
+    endNode = [int(endNode[0]),int(endNode[1])]
+
+    return np.abs(currentNode[0] - endNode[0]) + np.abs(currentNode[1]-endNode[1])
 
 
 def main():
-    filename = "maze_small.txt"
+    filename = "maze_big.txt"
 
-    matrix = read_file("Assignment2/2.4/" + filename)
-    print(matrix)
-    
-    find_path(matrix)
+    case = 2
+    matrix = read_file("Assignment2/2.4/" + filename)    
+    new_matrix = find_path(matrix,case)
 
-    print(matrix)
-
+    if filename == "maze_big.txt":
+        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_big.txt",new_matrix,fmt = '%d', delimiter= "")
+    else:
+        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_small.txt",new_matrix,fmt = '%d', delimiter= "")
+        
 
 if __name__ == '__main__':
     main()
