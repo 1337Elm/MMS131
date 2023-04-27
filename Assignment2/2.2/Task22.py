@@ -100,6 +100,7 @@ def lloydsAlgo(k: int,guess_x: list,guess_y: list,x: np.array,y: np.array) -> np
                 centroid_pos[0][i] = new_posx[i]
                 centroid_pos[1][i] = new_posy[i]
 
+
     #Add one to every line (needed because indexing begins at 0)
     #And save this to "kmeans_label.txt" file
     closest_centroid = closest_centroid + np.ones(len(x))
@@ -124,7 +125,7 @@ def kNN(point: list, k, i: int, closest_centroid: np.array, x: np.array,y: np.ar
     """
     #Initiate variables that are needed later
     distance = []
-    voted_class = None
+    voted_class = []
     count_1 = 0
     count_2 = 0
     count_3 = 0
@@ -132,7 +133,7 @@ def kNN(point: list, k, i: int, closest_centroid: np.array, x: np.array,y: np.ar
     #If k is a list, run this function for each value for k
     if isinstance(k, list):
         for j in range(len(k)):
-            kNN(point,k[j],i,closest_centroid,x,y)
+            voted_class.append(kNN(point,k[j],i,closest_centroid,x,y))
     else:
 
         #Calculate distance (L^i norm) add this to a list with its index
@@ -159,10 +160,9 @@ def kNN(point: list, k, i: int, closest_centroid: np.array, x: np.array,y: np.ar
         #See which class has a majority, return this class
         voted_class = np.argmax([count_1,count_2,count_3]) + 1
         print(voted_class)
-
     return voted_class
 
-def plotting(x: np.array,y: np.array,colour: str,name: str):
+def plotting(x: np.array,y: np.array,colour: str,label: str):
     """ Function that plots the data it recieves
 
         :param x: numpy array, array of x-coordinates for each data point
@@ -170,13 +170,13 @@ def plotting(x: np.array,y: np.array,colour: str,name: str):
         :param colour: string, string whished to be passed to the plotting ex 'r' for red and so on
         :param name: string, name for the file when saved
     """
-    plt.scatter(x,y, color = colour, label = "Given data")
+    plt.scatter(x,y, color = colour, label = label )
 
     plt.xlabel("x")
     plt.ylabel("y")
-    plt.title("Plot of the given data")
+    plt.title("Plot of data and clustering")
+    plt.legend(loc = "best", fontsize = 8)
 
-    plt.savefig("Assignment2/2.2/plots/" + name + ".jpeg")
 
 
 def main():
@@ -191,17 +191,52 @@ def main():
 
     x,y = read_file('Assignment2/2.2/' + filename)
 
-    centroids, closest_centroid = lloydsAlgo(k,guess_x,guess_y,x,y)
+    centroids, closest_centroid= lloydsAlgo(k,guess_x,guess_y,x,y)
 
     point = [0,0]
     k = [3,7,11]
     i = 1
-    kNN(point, k, i, closest_centroid, x,y)
 
-    plotting(x,y,colour='b', name ='plot1')
-    plotting(centroids[0,:],centroids[1,:], colour = 'r', name = 'centroids')
-    plotting(point[0],point[1],'k','newpoint')
+    cluster = kNN(point, k, i, closest_centroid, x,y)
 
+
+    for i in range(len(cluster)):
+        plt.figure()
+        plotting(centroids[0,:],centroids[1,:],colour = 'r',label = "Centroid final position")
+        
+        plotting(x[np.where(closest_centroid == 1)],y[np.where(closest_centroid == 1)],"m",label = "Cluster 1")
+        plotting(x[np.where(closest_centroid == 2)],y[np.where(closest_centroid == 2)],"y",label = "Cluster 2")
+        plotting(x[np.where(closest_centroid == 3)],y[np.where(closest_centroid == 3)],"c",label = "Cluster 3")
+        
+        if cluster[i] == 1:
+            plotting(point[0],point[1],'m',label = "New point")
+        elif cluster[i] == 2:
+            plotting(point[0],point[1],'y',label = "New point")  
+        else:
+            plotting(point[0],point[1],'c',label = "New point")
+
+        plt.savefig("Assignment2/2.2/plots/new_point_clustering" + str(i+1))     
+
+    plt.figure()
+    plotting(centroids[0,:],centroids[1,:],colour = 'r',label = "Centroid final position")
+        
+    plotting(x[np.where(closest_centroid == 1)],y[np.where(closest_centroid == 1)],"m",label = "Cluster 1")
+    plotting(x[np.where(closest_centroid == 2)],y[np.where(closest_centroid == 2)],"y",label = "Cluster 2")
+    plotting(x[np.where(closest_centroid == 3)],y[np.where(closest_centroid == 3)],"c",label = "Cluster 3")
+
+    plotting(point[0],point[1],'k',label = "New point")
+    plt.savefig("Assignment2/2.2/plots/new_point") 
+    
+
+    plt.figure()
+    plotting(centroids[0,:],centroids[1,:],colour = 'r',label = "Centroid final position")
+        
+    plotting(x[np.where(closest_centroid == 1)],y[np.where(closest_centroid == 1)],"m",label = "Cluster 1")
+    plotting(x[np.where(closest_centroid == 2)],y[np.where(closest_centroid == 2)],"y",label = "Cluster 2")
+    plotting(x[np.where(closest_centroid == 3)],y[np.where(closest_centroid == 3)],"c",label = "Cluster 3")
+    plt.savefig("Assignment2/2.2/plots/clustering") 
+
+    plt.show()
 
 if __name__ == '__main__':
     main()

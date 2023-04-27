@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import matplotlib
 import warnings
 import time
-from tqdm.auto import tqdm
 
 #---------------------------
 #Ignore deprecation warnings
@@ -43,7 +42,7 @@ def initPop(K: int, num_param: int, param_range: int) -> np.array:
         :param return: np.array, 2d array of each individuals parameters
     """
     #Needed since random.uniform() uses [-param_range,param_range) instead of [-param_range,param_range]
-    delta = 1e-6
+    delta = 1e-16
     population = np.zeros((num_param,K))
 
     #Loop through each individual and each parameter and extract a random value for it
@@ -136,7 +135,7 @@ def mutation(gene: np.array,p_mut: float, p_creep: float,creepRate: float,param_
         :param return: np.array, new list of chromosomes for the current individual
     """
     new_gene = np.zeros(len(gene))
-    delta = 1e-6
+    delta = 1e-16
 
     for i in range(len(gene)):
         r = random.uniform(0,1)
@@ -237,38 +236,6 @@ def runAlgo(param_range: int, p_tour: int, p_cross: int, p_mut: int, p_creep: in
     return max_fitness
 
 
-def find_best_params():
-    """ Function that finds the best combinations of parameters to use. To limit somewhat
-        only 4 values are tested for each parameter. Running this still takes an estimated 22h.
-
-        :param return: list of the best combinations of parameters and the maximum fitness achieved with these
-    """
-    param_range = [2,1,3,4]
-    p_tour = [0.2,0.4,0.75,0.9]
-    p_cross = [0.2,0.4,0.75,0.9]
-    p_mut = [0.125,0.4,0.6,0.8]
-    p_creep = [0.2,0.5,0.7,0.9]
-    creep_rate = [0.01,0.1,0.2,0.3]
-
-    progress_bar = tqdm(total = len(param_range)**6,position=0,leave=True,colour="green")
-
-    max_fitness = 0
-    best_params = []
-    for i1 in range(len(param_range)):
-        for i2 in range(len(p_tour)):
-            for i3 in range(len(p_cross)):
-                for i4 in range(len(p_mut)):
-                    for i5 in range(len(p_creep)):
-                        for i6 in range(len(creep_rate)):
-                            max_fitness_gen = runAlgo(param_range[i1],p_tour[i2],p_cross[i3],p_mut[i4],p_creep[i5],creep_rate[i6],plot = False)
-                            if max_fitness_gen > max_fitness:
-                                max_fitness = max_fitness_gen
-                                best_params = [param_range[i1],p_tour[i2],p_cross[i3],p_mut[i4],p_creep[i5],creep_rate[i6]]
-                            progress_bar.update(1)
-    
-    return best_params,max_fitness
-
-
 def main():
     """Main function of the script. Either runs the standard case and plots the results
         or finds the best combination of parameters to use (est. time 22h). Reply "N" to input to run normal case
@@ -282,18 +249,8 @@ def main():
     p_creep = 0.5
     creep_rate = 0.01
 
-    case = input("Do you want to find best parameters or run normal case? (F/N)")
-    if case == "N":
-        runAlgo(param_range,p_tour,p_cross,p_mut,p_creep,creep_rate,plot = True)
-    elif case == "F":
-        params, maxfitness = find_best_params()
-
-        print(f"The best parameters are the following\n")
-        print(params)
-        print("——————————————————————————————————-")
-        print(f"The best fitness with these parameters is {maxfitness}")
-
-        runAlgo(params[0],params[1],params[2],params[3],params[4],params[5],plot = True)
+    max_fitness = runAlgo(param_range,p_tour,p_cross,p_mut,p_creep,creep_rate,plot = True)
+    print(max_fitness)
 
 
 if __name__ == '__main__':

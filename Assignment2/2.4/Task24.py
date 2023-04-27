@@ -133,13 +133,13 @@ def calc_distance(matrix: np.array, currentNode: list) -> int:
     endNode = np.where(matrix == 3)
     endNode = [int(endNode[0]),int(endNode[1])]
 
-    return np.abs(currentNode[0] - endNode[0]) + np.abs(currentNode[1]-endNode[1])
+    return np.abs(endNode[0] - currentNode[0]) + np.abs(endNode[1]-currentNode[1])
 
 
 def main():
     filename = "maze_big.txt"
 
-    case = 2
+    case = 1
     matrix = read_file("Assignment2/2.4/" + filename)    
     new_matrix = find_path(matrix,case)
 
