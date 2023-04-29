@@ -133,12 +133,15 @@ def kNN(point: list, k, i: int, closest_centroid: np.array, x: np.array,y: np.ar
     #If k is a list, run this function for each value for k
     if isinstance(k, list):
         for j in range(len(k)):
-            voted_class.append(kNN(point,k[j],i,closest_centroid,x,y))
+            if isinstance(i,list):
+                for n in range(len(i)):
+                    voted_class.append(kNN(point,k[j],i[n],closest_centroid,x,y))
+            else:
+                voted_class.append(kNN(point,k[j],i,closest_centroid,x,y))
     else:
-
         #Calculate distance (L^i norm) add this to a list with its index
         for j in range(len(x)):
-            distance.append([j,(np.abs(x[j]-point[0])**i)**(1/i) + (np.abs(y[j]-point[0])**i)*(1/i)])
+            distance.append([j,((np.abs(x[j]-point[0])**i) + (np.abs(y[j]-point[0])**i))**(1/i)])
 
         #Sort said list by distance (shortsest first)
         #And find all interesting neighbors
@@ -149,17 +152,17 @@ def kNN(point: list, k, i: int, closest_centroid: np.array, x: np.array,y: np.ar
         neighbors_index = [i[0] for i in neighbors]
 
         #Count the class for these neighbors
-        for i in neighbors_index:
-            if closest_centroid[i] == 1:
+        for n in neighbors_index:
+            if closest_centroid[n] == 1:
                 count_1 += 1
-            elif closest_centroid[i] == 2:
+            elif closest_centroid[n] == 2:
                 count_2 += 1
             else:
                 count_3 += 1
         
         #See which class has a majority, return this class
         voted_class = np.argmax([count_1,count_2,count_3]) + 1
-        print(voted_class)
+        print(f"With k = {k} and i = {i} the class of the new point is {voted_class}")
     return voted_class
 
 def plotting(x: np.array,y: np.array,colour: str,label: str):
@@ -192,10 +195,13 @@ def main():
     x,y = read_file('Assignment2/2.2/' + filename)
 
     centroids, closest_centroid= lloydsAlgo(k,guess_x,guess_y,x,y)
+    print(f"The final position of C_1 is ({centroids[0][0][0]}, {centroids[1][0][0]})")
+    print(f"The final position of C_1 is ({centroids[0][0][1]}, {centroids[1][0][1]})")
+    print(f"The final position of C_1 is ({centroids[0][0][2]}, {centroids[1][0][2]})")
 
     point = [0,0]
     k = [3,7,11]
-    i = 1
+    i = [1,2,3]
 
     cluster = kNN(point, k, i, closest_centroid, x,y)
 

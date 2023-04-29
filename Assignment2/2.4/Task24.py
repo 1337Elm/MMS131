@@ -6,12 +6,9 @@
 #--------Imports------------
 
 import numpy as np
-import matplotlib
-import warnings
+import random
 
 #---------------------------
-#Ignore deprecation warnings
-warnings.filterwarnings("ignore", category=matplotlib.MatplotlibDeprecationWarning)
 
 def read_file(filename: str) -> np.array:
     """Function that generates 2d array (row,column) from the text file.
@@ -61,7 +58,6 @@ def find_path(matrix: np.array,case: int) ->list:
     #path = []
     #path.append(startNode)
     best_dist = 1
-
     while best_dist > 0:
         distance = []
         neighbors = find_neighbors(matrix,current_node,case)
@@ -79,7 +75,26 @@ def find_path(matrix: np.array,case: int) ->list:
             try:
                 best_neighbor = neighbors[int(np.where(distance == best_dist)[0])]
             except:
-                best_neighbor = neighbors[np.where(distance == best_dist)[0][0]]
+                
+                #Possible solution to always pick the best neighbor, if more than 1 have
+                #euqally good distances
+                
+                # new_distance1 = []
+                # new_distance2 = []
+                # new_neighbors1 = find_neighbors(matrix,neighbors[int(np.where(distance == best_dist)[0][0])],case)
+                # for i in range(len(new_neighbors1)):
+                #     new_distance1.append(calc_distance(matrix,new_neighbors1[i]))
+                
+                # new_neighbors2 = find_neighbors(matrix,neighbors[int(np.where(distance == best_dist)[0][1])],case)
+                # for i in range(len(new_neighbors2)):
+                #     new_distance2.append(calc_distance(matrix,new_neighbors2[i]))
+
+                # if np.min(new_distance1) > np.min(new_distance2):
+                #     best_neighbor = neighbors[np.where(distance == best_dist)[0][1]]
+                # else:
+                #     best_neighbor = neighbors[np.where(distance == best_dist)[0][0]]
+
+                best_neighbor = neighbors[np.where(distance == best_dist)[0][1]]
 
             current_node = [best_neighbor[0],best_neighbor[1]] #Update current node to node whish has min distance to target
             #path.append(current_node)
@@ -133,20 +148,20 @@ def calc_distance(matrix: np.array, currentNode: list) -> int:
     endNode = np.where(matrix == 3)
     endNode = [int(endNode[0]),int(endNode[1])]
 
-    return np.abs(endNode[0] - currentNode[0]) + np.abs(endNode[1]-currentNode[1])
+    return ((np.abs(currentNode[0] - endNode[0]))**2 + (np.abs(currentNode[1]-endNode[1]))**2)**(1/2)
 
 
 def main():
-    filename = "maze_big.txt"
+    filename = "maze_small.txt"
 
     case = 1
     matrix = read_file("Assignment2/2.4/" + filename)    
     new_matrix = find_path(matrix,case)
 
     if filename == "maze_big.txt":
-        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_big.txt",new_matrix,fmt = '%d', delimiter= "")
+        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_big" + str(case) + "txt",new_matrix,fmt = '%d', delimiter= "")
     else:
-        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_small.txt",new_matrix,fmt = '%d', delimiter= "")
+        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_small" + str(case) + "txt",new_matrix,fmt = '%d', delimiter= "")
         
 
 if __name__ == '__main__':
