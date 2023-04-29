@@ -21,6 +21,7 @@ def read_file(filename: str) -> np.array:
     file =  open(filename)
     lines = file.readlines()
 
+    #Go through each row, append the row to the matrix 
     matrix = []
     for i in range(len(lines)):
         numbers = []
@@ -47,25 +48,28 @@ def find_path(matrix: np.array,case: int) ->list:
 
         :param return: np.array, 2d array of each node traversed 
     """
+    #Find index of start and end node
     startNode = np.where(matrix == 2)
     startNode = [int(startNode[0]),int(startNode[1])]
 
     endNode = np.where(matrix == 3)
     endNode = [int(endNode[0]),int(endNode[1])]
 
+    #Set starting node as the first node and initialize a best distance above 0 to the end node
     current_node = startNode
-    
-    #path = []
-    #path.append(startNode)
     best_dist = 1
     while best_dist > 0:
+        #Find neighbors and set current node to visited (+5)
         distance = []
         neighbors = find_neighbors(matrix,current_node,case)
         matrix[current_node[0],current_node[1]] = matrix[current_node[0],current_node[1]] + 5 #+5 means visited
 
+        #Compute distance for each neighbor
         for i in range(len(neighbors)):
             distance.append(calc_distance(matrix,neighbors[i]))
 
+        #Find best neighbor and set this node as new current node
+        #If the best distance is 0, this is the end node, set end node to visited and break
         best_dist = np.min(distance)
         if best_dist == 0:
             current_node = endNode
@@ -77,7 +81,7 @@ def find_path(matrix: np.array,case: int) ->list:
             except:
                 
                 #Possible solution to always pick the best neighbor, if more than 1 have
-                #euqally good distances
+                #euqally good distances, but this isnt included in a greedy BFS hence it is commented
                 
                 # new_distance1 = []
                 # new_distance2 = []
@@ -94,10 +98,9 @@ def find_path(matrix: np.array,case: int) ->list:
                 # else:
                 #     best_neighbor = neighbors[np.where(distance == best_dist)[0][0]]
 
-                best_neighbor = neighbors[np.where(distance == best_dist)[0][1]]
+                best_neighbor = neighbors[np.where(distance == best_dist)[0][0]]
 
             current_node = [best_neighbor[0],best_neighbor[1]] #Update current node to node whish has min distance to target
-            #path.append(current_node)
 
     return matrix
 
@@ -117,16 +120,21 @@ def find_neighbors(matrix: np.array, node: list,case: int) -> list:
     y = node[0]
     x = node[1]
 
+    #All possible neighbors depending on case
     if case == 1:
         combinations = [[y+1,x],[y-1,x],[y,x+1],[y,x-1]]
     else:
         combinations = [[y+1,x],[y-1,x],[y,x+1],[y,x-1],[y+1,x+1],[y-1,x-1],[y+1,x-1],[y-1,x+1]]
 
     for i in combinations:
+        #Try lets me ignore if a neighbor is in reality outside of the map
+        #This would give an error but now it is simply ignored
         try:
+            #If negative, it loops around and its no longer the correct square -> no negative values
             if i[0] < 0 or i[1] < 0:
                 pass
             else:
+                #Only values of 0 or 3 are available to choose, if the value isnt one of these pass
                 val = matrix[i[0],i[1]]
             
                 if val == 0 or val == 3:
@@ -152,16 +160,19 @@ def calc_distance(matrix: np.array, currentNode: list) -> int:
 
 
 def main():
-    filename = "maze_small.txt"
+    """ Main function of the script. Chooses which maze to solve and which case (4 or 8-connectivity)
+        Then saves the solution to a textfile
+    """
+    filename = "maze_big.txt"
 
     case = 1
     matrix = read_file("Assignment2/2.4/" + filename)    
     new_matrix = find_path(matrix,case)
 
     if filename == "maze_big.txt":
-        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_big" + str(case) + "txt",new_matrix,fmt = '%d', delimiter= "")
+        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_big" + str(case) + ".txt",new_matrix,fmt = '%d', delimiter= "")
     else:
-        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_small" + str(case) + "txt",new_matrix,fmt = '%d', delimiter= "")
+        np.savetxt("Assignment2/2.4/solutions/solvedMatrix_small" + str(case) + ".txt",new_matrix,fmt = '%d', delimiter= "")
         
 
 if __name__ == '__main__':

@@ -64,6 +64,7 @@ def EvaluateIndividual(ind_gene: list,x: np.array,y: np.array, g: np.array, K: i
 
         :param return: int, fitess for the current individual
     """
+    #Calculate approximate g, error and then return fitness
     g_hat = (1 + x*ind_gene[0] + x**2*ind_gene[1] + x**3*ind_gene[2])\
         /(1 + y*ind_gene[3] + y**2*ind_gene[4] + y**3*ind_gene[5])
     
@@ -81,6 +82,8 @@ def TournamentSelect(fitness: np.array, p_tour: float,populationsize: int) -> in
         
         :param return: int, index for the chosen individual
     """
+    #Choose 2 random individuals, if probability is fulfilled return the individual with highest fitness 
+    #Else return the individual with lower fitness
     r = random.uniform(0,1)
     inds = [random.randint(0,populationsize-1), random.randint(0,populationsize-1)]
     if r < p_tour:
@@ -108,6 +111,8 @@ def Cross(gene_1: list,gene_2: list,num_param: int) -> np.array:
     new_gene1 = []
     new_gene2 = []
 
+    #Generate random crossing point, append all values before this to new individuals accordingly
+    #Append all values after as they were and return
     cross_point = random.randint(0,num_param)
     for i in range(len(gene_1)):
         if i <= cross_point:
@@ -137,6 +142,8 @@ def Mutate(gene: np.array,p_mut: float, p_creep: float,creepRate: float,param_ra
     new_gene = np.zeros(len(gene))
     delta = 1e-16
 
+    #Iterate through each gene, generate random float, if probabilities are fulfilled mutate accordingly
+    #Set mutated gene as new gene and return
     for i in range(len(gene)):
         r = random.uniform(0,1)
         if r < p_mut:
@@ -162,8 +169,10 @@ def runAlgo(populationsize: int,num_gens: int,p_tour: int, p_cross: int, p_mut: 
 
         :param return: int, the best fitness achieved for the instance of the algorithm
     """
+    #Check time it takes to run (curiousity)
     start = time.time()
 
+    #Initialize variables that arent supossed to change
     filename = 'data_ga.txt'
     x, y, g = read_file('Assignment2/2.3/' + filename)
     K = 100
@@ -217,6 +226,7 @@ def runAlgo(populationsize: int,num_gens: int,p_tour: int, p_cross: int, p_mut: 
                     temp_pop[:,n] = mutatedGene
             pop = temp_pop
     
+    #Plot results (best and mean fitness and print best parameters)
     if plot == True:
         print(f"the most correct parameters are {pop[:,best_Ind]}")
         end = time.time()
@@ -248,6 +258,7 @@ def main():
     populationsize = 200
     num_gens = 50000
 
+    #Run through entire algorithm
     max_fitness = runAlgo(populationsize,num_gens,p_tour,p_cross,p_mut,p_creep,creep_rate,plot = True)
     print(f"The maximum fitness was {max_fitness}")
 
