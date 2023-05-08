@@ -29,7 +29,6 @@ def read_file(filename: str) -> np.array:
     y = data[:,1]
     g = data[:,2]
 
-
     return np.array(x), np.array(y), np.array(g)
 
 
